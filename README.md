@@ -209,26 +209,6 @@ stm32-esp32-can-communication/
 
 ---
 
-### STM32: High Receive Error Counter (REC = 128, EFLG = 0x0B)
-
-**Symptoms:** Messages not received, REC increases to 128
-
-**Cause:** **Crystal frequency mismatch** - code configured for wrong crystal
-
-**Solution:**
-1. **Check your MCP2515 crystal frequency** (look at silver component on module)
-2. **If 8 MHz** → Code works as-is ✓
-3. **If 16 MHz** → Modify `CANSPI.c`:
-```c
-   // Change these lines in CANSPI_Initialize():
-   MCP2515_WriteByte(MCP2515_CNF1, 0x00);
-   MCP2515_WriteByte(MCP2515_CNF2, 0xE5);  // For 16 MHz
-   MCP2515_WriteByte(MCP2515_CNF3, 0x83);  // For 16 MHz
-```
-
-**Why this happens:** Bit timing(TQ) calculations depend on crystal frequency. Wrong crystal = wrong timing = garbled messages.
-
----
 
 ### STM32: "SPI communication FAILED!"
 
@@ -258,12 +238,48 @@ stm32-esp32-can-communication/
 6.  Crystal frequency correct (8 MHz for provided code)
 
 ---
+### STM32: High Receive Error Counter (REC = 128, EFLG = 0x0B)
+
+**Symptoms:** Messages not received, REC increases to 128, EFLG shows error flags
+
+**Cause:** **Crystal frequency mismatch** - This was the main issue we encountered!
+
+**The Problem:**
+- Most MCP2515 libraries assume a **16 MHz crystal**
+- Many cheap MCP2515 modules come with **8 MHz crystals**
+- Wrong configuration = wrong bit timing = NO communication
+
+**Solution:**
+1. **Check your MCP2515 crystal frequency** (look at the silver component on module - labeled "8.000" or "16.000")
+2. **If 8 MHz** → Use the provided code (configured for 8 MHz) ✓
+3. **If 16 MHz** → Modify `CANSPI.c`:
+```c
+   // In CANSPI_Initialize(), change CNF registers:
+   MCP2515_WriteByte(MCP2515_CNF1, 0x00);
+   MCP2515_WriteByte(MCP2515_CNF2, 0xE5);  // For 16 MHz
+   MCP2515_WriteByte(MCP2515_CNF3, 0x83);  // For 16 MHz
+```
+
+**Why this happens:** 
+- Bit timing calculations depend on crystal frequency
+- 8 MHz crystal with 16 MHz settings = running at 250 kbps instead of 500 kbps
+- ESP32 sends at 500 kbps, STM32 listens at 250 kbps = garbled messages
+- Result: REC counter maxes out at 128 (error-passive state)
+
+**This was the hardest bug to find!** The library assumed 16 MHz, but the hardware had 8 MHz.
+
+---
 
 ##  What We Learned
+**The hardest problem to solve:** Most MCP2515 libraries and examples assume a 16 MHz crystal, but many cheap modules use 8 MHz crystals. This causes:
+- Perfect SPI communication (so you think everything works)
+- Successful initialization (MCP2515 responds correctly)
+- **Complete CAN failure** (no messages received, REC = 128)
 
+The symptoms don't point to the real cause - it looks like a wiring or termination problem, but it's actually bit timing!
 ### Key Concepts
 
-1. **Crystal Frequency Matters**: MCP2515 bit timing must match crystal frequency (8 MHz vs 16 MHz)
+1. **Crystal Frequency is CRITICAL**: MCP2515 bit timing calculations depend entirely on crystal frequency
 2. **Termination is Critical**: 120Ω resistors at both ends prevent signal reflections
 3. **Common Ground Required**: CAN is not fully isolated - needs common ground reference
 4. **Filters Can Be Disabled**: Setting RXBnCTRL to `0x60` accepts all messages
@@ -285,6 +301,9 @@ stm32-esp32-can-communication/
 - **REC (Receive Error Counter)**: Increases when RX corrupted
 - **EFLG Register**: Shows error flags
 
+### Note on Message Filtering
+
+We disabled CAN filters in this project (accept all messages), which is fine for learning. In real automotive applications, ECUs use strict filtering to only process relevant messages - essential when the bus has hundreds of messages per second!
 ---
 
 ##  References

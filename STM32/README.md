@@ -4,7 +4,26 @@
 This code receives CAN messages with ID `0x36` and toggles an LED based on the received data. Includes diagnostic output and periodic status monitoring.
 
 ---
+##  CRITICAL: Crystal Frequency Issue
 
+**Before you start**, be aware of this common problem:
+
+Most MCP2515 example code and libraries are configured for **16 MHz crystals**, but many cheap MCP2515 modules sold online come with **8 MHz crystals**. This mismatch causes **complete communication failure** with symptoms that are hard to diagnose:
+
+- ✅ SPI communication works fine
+- ✅ MCP2515 initializes successfully  
+- ❌ **But NO CAN messages are received!**
+- ❌ REC (Receive Error Counter) climbs to 128
+- ❌ EFLG shows error flags (0x0B)
+
+**The code in this repository is configured for 8 MHz crystals** (the most common).
+
+**How to check your crystal:**
+Look at the silver rectangular component on your MCP2515 module. It's labeled either "8.000" (8 MHz) or "16.000" (16 MHz).
+
+If you have 16 MHz, see the configuration section below for the fix.
+
+---
 ## Hardware Requirements
 
 ### STM32 Board

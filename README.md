@@ -303,7 +303,7 @@ The symptoms don't point to the real cause - it looks like a wiring or terminati
 
 ### Note on Message Filtering
 
-We disabled CAN filters in this project (accept all messages), which is fine for learning. In real automotive applications, ECUs use strict filtering to only process relevant messages - essential when the bus has hundreds of messages per second!
+- We disabled CAN filters in this project (accept all messages), which is fine for learning. In real automotive applications, ECUs use strict filtering to only process relevant messages - essential when the bus has hundreds of messages per second!
 ---
 
 ##  References

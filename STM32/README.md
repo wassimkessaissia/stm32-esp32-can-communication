@@ -231,4 +231,3 @@ This helps diagnose problems like:
 - TJA1050 transceiver is usually **built into** MCP2515 modules
 - Diagnostic code verifies SPI communication before CAN initialization
 - Status monitoring helps debug CAN bus issues in real-time
-- 10ms delay in main loop prevents excessive CPU usage

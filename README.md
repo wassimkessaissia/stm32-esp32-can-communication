@@ -17,7 +17,7 @@ CAN bus communication between **STM32F401RE** (using MCP2515) and **ESP32-S3** (
 
 ---
 
-## 🎯 Overview
+##  Overview
 
 This project demonstrates **CAN bus communication** between two popular microcontrollers:
 
@@ -31,7 +31,7 @@ This project demonstrates **CAN bus communication** between two popular microcon
 
 ---
 
-## 🛠️ Hardware Requirements
+##  Hardware Requirements
 
 ### ESP32 Side
 
@@ -60,7 +60,7 @@ This project demonstrates **CAN bus communication** between two popular microcon
 
 ---
 
-## 🏗️ System Architecture
+##  System Architecture
 ```
 ┌─────────────┐                                    ┌─────────────┐
 │   ESP32-S3  │                                    │ STM32F401RE │
@@ -83,7 +83,7 @@ This project demonstrates **CAN bus communication** between two popular microcon
 
 ---
 
-## 🔌 Wiring Connections
+##  Wiring Connections
 
 ### ESP32 to MCP2551
 
@@ -91,7 +91,7 @@ This project demonstrates **CAN bus communication** between two popular microcon
 |-----------|-------------|-------------|
 | GPIO 21   | TX          | CAN TX      |
 | GPIO 20   | RX          | CAN RX      |
-| 3.3V      | VCC         | Power       |
+| 5V        | VCC         | Power       |
 | GND       | GND         | Ground      |
 
 ### STM32 to MCP2515
@@ -102,7 +102,7 @@ This project demonstrates **CAN bus communication** between two popular microcon
 | PA6       | SO (MISO)   | SPI Data Out |
 | PA7       | SI (MOSI)   | SPI Data In |
 | PB6       | CS          | Chip Select |
-| 3.3V/5V   | VCC         | Power (check module) |
+| 5V        | VCC         | Power (check module) |
 | GND       | GND         | Ground |
 
 ### CAN Bus Connection
@@ -113,11 +113,11 @@ This project demonstrates **CAN bus communication** between two popular microcon
 | CANL                 | CANL                         |
 | GND                  | GND (common ground!)         |
 
-**CRITICAL:** Add **120Ω resistors** between CANH and CANL at **both ends**!
+**CRITICAL:** Add **120Ω resistors** between CANH and CANL at **both ends** (MCP2515 has a built in 120Ω)!
 
 ---
 
-## 🚀 Quick Start
+##  Quick Start
 
 ### 1. Hardware Setup
 
@@ -149,14 +149,13 @@ This project demonstrates **CAN bus communication** between two popular microcon
 
 ---
 
-## 📁 Project Structure
+##  Project Structure
 ```
 stm32-esp32-can-communication/
 ├── README.md                    # This file
 ├── ESP32/
 │   ├── README.md               # ESP32-specific setup
-│   └── esp32_can_transmitter/
-│       └── esp32_can_transmitter.ino
+│   └── esp32_can_transmitter.ino
 └── STM32/
     ├── README.md               # STM32-specific setup
     └── Core/
@@ -172,7 +171,7 @@ stm32-esp32-can-communication/
 
 ---
 
-## 🔧 Troubleshooting
+##  Troubleshooting
 
 ### ESP32: "BUS-OFF! Recovery..." Messages
 
@@ -185,10 +184,10 @@ stm32-esp32-can-communication/
 4. No common ground
 
 **Solutions:**
-- ✅ Add 120Ω resistors between CANH and CANL at **both ends**
-- ✅ Verify STM32 is running (check debug UART output)
-- ✅ Check wiring: CANH-to-CANH, CANL-to-CANL
-- ✅ Connect GND between ESP32 and STM32
+-  Add 120Ω resistors between CANH and CANL at **both ends**
+-  Verify STM32 is running (check debug UART output)
+-  Check wiring: CANH-to-CANH, CANL-to-CANL
+-  Connect GND between ESP32 and STM32
 
 ---
 
@@ -203,10 +202,10 @@ stm32-esp32-can-communication/
 4. Wiring issues (MOSI/MISO/SCK)
 
 **Solutions:**
-- ✅ Check diagnostic output: CANSTAT should be `0x80`, CANCTRL should be `0x87`
-- ✅ Verify CS pin is PB6 and correctly wired
-- ✅ Check MCP2515 power LED is ON
-- ✅ Verify SPI wiring (don't swap MOSI/MISO!)
+-  Check diagnostic output: CANSTAT should be `0x80`, CANCTRL should be `0x87`
+-  Verify CS pin is PB6 and correctly wired
+-  Check MCP2515 power LED is ON
+-  Verify SPI wiring (don't swap MOSI/MISO!)
 
 ---
 
@@ -227,7 +226,7 @@ stm32-esp32-can-communication/
    MCP2515_WriteByte(MCP2515_CNF3, 0x83);  // For 16 MHz
 ```
 
-**Why this happens:** Bit timing calculations depend on crystal frequency. Wrong crystal = wrong timing = garbled messages.
+**Why this happens:** Bit timing(TQ) calculations depend on crystal frequency. Wrong crystal = wrong timing = garbled messages.
 
 ---
 
@@ -242,25 +241,25 @@ stm32-esp32-can-communication/
 4. Wrong SPI pins
 
 **Solutions:**
-- ✅ Verify all SPI connections (PA5, PA6, PA7, PB6)
-- ✅ Check MCP2515 power (3.3V or 5V depending on module)
-- ✅ Don't swap MOSI and MISO!
+- Verify all SPI connections (PA5, PA6, PA7, PB6)
+- Check MCP2515 power (3.3V or 5V depending on module)
+- Don't swap MOSI and MISO!
 
 ---
 
 ### No Communication at All
 
 **Check these in order:**
-1. ✅ Both boards powered and running
-2. ✅ Common ground connected
-3. ✅ 120Ω resistors at both ends
-4. ✅ CANH-to-CANH, CANL-to-CANL (not swapped)
-5. ✅ Correct bit rate (500 kbps on both sides)
-6. ✅ Crystal frequency correct (8 MHz for provided code)
+1.  Both boards powered and running
+2.  Common ground connected
+3.  120Ω resistors at both ends
+4.  CANH-to-CANH, CANL-to-CANL (not swapped)
+5.  Correct bit rate (500 kbps on both sides)
+6.  Crystal frequency correct (8 MHz for provided code)
 
 ---
 
-## 💡 What We Learned
+##  What We Learned
 
 ### Key Concepts
 
@@ -279,7 +278,7 @@ stm32-esp32-can-communication/
 #### MCP2515 Operating Modes
 - **Configuration Mode (0x80)**: Set registers, cannot TX/RX
 - **Normal Mode (0x00)**: Active communication
-- Switch via CANCTRL register, verify via CANSTAT
+- Switch modes via CANCTRL register, verify mode via CANSTAT
 
 #### Error Detection
 - **TEC (Transmit Error Counter)**: Increases when TX fails
@@ -288,21 +287,23 @@ stm32-esp32-can-communication/
 
 ---
 
-## 📚 References
+##  References
 
 - [MCP2515 Datasheet](https://www.microchip.com/en-us/product/MCP2515) - Microchip DS21801E
 - [ESP32 TWAI Documentation](https://docs.espressif.com/projects/esp-idf/en/latest/esp32/api-reference/peripherals/twai.html)
 - [STM32F401RE Datasheet](https://www.st.com/en/microcontrollers-microprocessors/stm32f401re.html)
+- [STM32 MCP2515 Library](https://github.com/ProjectoOfficial/STM32/tree/main/STM32_MCP2515) - Reference implementation by ProjectoOfficial
+
+---
+##  License
+
+This project is open source and available under the [MIT License](LICENSE).
+
+Feel free to use, modify, and distribute with proper attribution.
 
 ---
 
-## 📝 License
-
-This project is open source. Feel free to use, modify, and distribute.
-
----
-
-## 🤝 Contributing
+##  Contributing
 
 Found a bug? Have a suggestion? Feel free to open an issue or submit a pull request!
 

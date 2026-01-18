@@ -1,7 +1,7 @@
 # STM32 CAN Receiver
 
 ## Overview
-This code receives CAN messages with ID `0x36` and toggles an LED based on the received data.
+This code receives CAN messages with ID `0x36` and toggles an LED based on the received data. Includes diagnostic output and periodic status monitoring.
 
 ---
 
@@ -83,24 +83,34 @@ To check your crystal frequency, look at the silver component on the MCP2515 mod
 
 ## How It Works
 
-1. **Initialization:**
-   - Tests SPI communication with MCP2515
-   - Configures bit timing for 8 MHz crystal @ 500 kbps
-   - Disables message filtering (accepts all CAN IDs)
-   - Switches to Normal mode
+### 1. Startup Diagnostics
+On power-up, the system performs comprehensive diagnostics:
+- Sends RESET command to MCP2515
+- Reads CANSTAT register (expects 0x80 = Configuration mode)
+- Reads CANCTRL register (expects 0x87 = default reset value)
+- Verifies SPI communication is working
+- Initializes CAN controller with 500kbps @ 8MHz settings
+- Switches to Normal mode
+- Displays final CANSTAT and CANCTRL values
 
-2. **Main Loop:**
-   - Continuously checks for incoming CAN messages
-   - When message with ID `0x36` arrives:
-     - `data[0] = 1` → Turn LED ON
-     - `data[0] = 0` → Turn LED OFF
-   - Prints debug info to UART
+### 2. Main Loop
+The system continuously:
+- **Receives CAN messages**: Checks for incoming messages with ID `0x36`
+  - `data[0] = 1` → Turn LED ON (PB8 = HIGH)
+  - `data[0] = 0` → Turn LED OFF (PB8 = LOW)
+- **Monitors status**: Every 2 seconds, displays:
+  - Messages in buffer
+  - Error flags (EFLG register)
+  - Transmit Error Counter (TEC)
+  - Receive Error Counter (REC)
 
 ---
 
 ## Serial Monitor Output
 
 Connect to UART2 at **115200 baud** to see:
+
+### Successful Startup:
 ```
 === MCP2515 Diagnostic ===
 Sending RESET command...
@@ -109,11 +119,27 @@ CANCTRL after reset: 0x87 (expected: 0x87)
 SPI communication OK!
 MCP2515 Init SUCCESS!
 CANSTAT: 0x00, CANCTRL: 0x00
+```
+
+### During Operation:
+```
 RX: ID=0x36, Data[0]=1
 LED ON
+Status - Messages: 0, EFLG: 0x00, TEC: 0, REC: 0
 RX: ID=0x36, Data[0]=0
 LED OFF
+Status - Messages: 0, EFLG: 0x00, TEC: 0, REC: 0
 ```
+
+### Status Indicators:
+- **Messages**: Number of unread messages in receive buffers
+- **EFLG**: Error flags (0x00 = no errors)
+  - 0x01 = Error warning
+  - 0x08 = RX error-passive
+  - 0x10 = TX error-passive  
+  - 0x20 = Bus-off
+- **TEC**: Transmit Error Counter (should be 0 - not transmitting)
+- **REC**: Receive Error Counter (should be 0 - no receive errors)
 
 ---
 
@@ -137,7 +163,7 @@ LED OFF
 STM32/
 ├── Core/
 │   ├── Src/
-│   │   ├── main.c          # Main application with diagnostic code
+│   │   ├── main.c          # Main application with diagnostics & status monitoring
 │   │   ├── CANSPI.c        # CAN SPI high-level driver
 │   │   └── MCP2515.c       # MCP2515 low-level SPI driver
 │   └── Inc/
@@ -149,9 +175,41 @@ STM32/
 
 ---
 
+## Diagnostic Features
+
+### SPI Communication Test
+Before initializing CAN, the code verifies SPI is working by:
+1. Sending RESET command
+2. Reading known register values
+3. Confirming expected responses
+
+**If SPI fails**, you'll see:
+```
+SPI communication FAILED! Check wiring.
+Possible issues:
+- CS pin not connected or wrong GPIO
+- MOSI/MISO/SCK pins wrong
+- MCP2515 not powered
+```
+
+### Periodic Health Monitoring
+Every 2 seconds, the system reports:
+- Buffer status (messages waiting)
+- Error flags (communication issues)
+- Error counters (TX/RX quality)
+
+This helps diagnose problems like:
+- Missing termination resistors (REC increases)
+- Bit timing mismatch (REC = 128, EFLG = 0x0B)
+- Bus-off conditions (EFLG = 0x20)
+
+---
+
 ## Notes
 
 - MCP2515 communicates via **SPI**, not native CAN
 - STM32F401RE does **not** have built-in CAN controller
 - TJA1050 transceiver is usually **built into** MCP2515 modules
-- Diagnostic code helps verify SPI communication before CAN initialization
+- Diagnostic code verifies SPI communication before CAN initialization
+- Status monitoring helps debug CAN bus issues in real-time
+- 10ms delay in main loop prevents excessive CPU usage

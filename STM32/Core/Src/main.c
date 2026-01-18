@@ -150,7 +150,7 @@ int main(void)
 
   /* Infinite loop */
   /* USER CODE BEGIN WHILE */
-
+  uint32_t lastCheck = 0;
   while (1)
   {
     /* USER CODE END WHILE */
@@ -171,7 +171,16 @@ int main(void)
 	          }
 	      }
 
-
+	      // Periodic status check every 2 seconds
+	      if(HAL_GetTick() - lastCheck > 2000) {
+	          uint8_t msgCount = CANSPI_messagesInBuffer();
+	          uint8_t eflg = MCP2515_ReadByte(MCP2515_EFLG);
+	          uint8_t tec = MCP2515_ReadByte(MCP2515_TEC);   // Transmit Error Counter
+	          uint8_t rec = MCP2515_ReadByte(MCP2515_REC);   // Receive Error Counter
+	          printf("Status - Messages: %d, EFLG: 0x%02X, TEC: %d, REC: %d\r\n",
+	                 msgCount, eflg, tec, rec);
+	          lastCheck = HAL_GetTick();
+	      }
 
 	      HAL_Delay(10);
 	  }

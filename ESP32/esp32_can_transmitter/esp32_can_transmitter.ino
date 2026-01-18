@@ -5,7 +5,7 @@
 #define TWAI_TX_PIN GPIO_NUM_21
 #define TWAI_RX_PIN GPIO_NUM_20
 
-#define CAN_ID_CMD 0x36   // CAN ID
+#define CAN_ID_CMD 0x36   // MUST match STM32 
 
 // ================= GLOBALS =================
 uint32_t lastTxTime = 0;
@@ -28,6 +28,8 @@ void setupTWAI() {
       Serial.println("TWAI start failed!");
       while(1);
   }
+  
+  Serial.println("TWAI initialized successfully!");
 }
 
 // ================= SEND =================
@@ -55,20 +57,20 @@ void sendCommand(bool state) {
       Serial.printf("%02X ", msg.data[i]);
     }
     Serial.println();
-  } else if (result == 263) { 
-    Serial.println("BUS-OFF! Recovery...");
+  } else if (result == ESP_ERR_TIMEOUT) {
+    Serial.println("[ERROR] BUS-OFF! Recovery...");
     twai_stop();
     delay(100);
     twai_start();
   } else {
-    Serial.printf("[TX] ERROR: %d\n", result);// if the is an issue the error number appears 
+    Serial.printf("[TX ERROR] Code: %d\n", result);
   }
 }
 
 // ================= SETUP =================
 void setup() {
   Serial.begin(115200);
-  delay(100);
+  delay(1000);
   Serial.println("=== ESP32 CAN TX Demo ===");
   setupTWAI();
 }
